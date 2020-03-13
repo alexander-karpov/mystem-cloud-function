@@ -5,7 +5,7 @@ module.exports.handler = function handler(event) {
 
     if (!text) {
         return {
-            statusCode: '400 BadRequest',
+            statusCode: 400,
             body: 'Query parameter "text" was not provided.'
         }
     }
@@ -16,7 +16,7 @@ module.exports.handler = function handler(event) {
         mystem = spawn('./mystem', ['--format=json', '--weight', '-i']);
     } catch (error) {
         return {
-            statusCode: '500 Internal Server Error',
+            statusCode: 500,
             body: error.toString()
         }
     }
@@ -30,7 +30,7 @@ module.exports.handler = function handler(event) {
 
         mystem.stderr.on('data', error => {
             reject({
-                statusCode: '500 Internal Server Error',
+                statusCode: 500,
                 body: error.toString()
             });
         });
@@ -38,7 +38,7 @@ module.exports.handler = function handler(event) {
         mystem.stdout.on('close', () => {
             if (!output) {
                 resolve({
-                    statusCode: '200 OK',
+                    statusCode: 200,
                     headers: { 'Content-Type': 'application/json' },
                     body: '[]'
                 });
@@ -47,7 +47,7 @@ module.exports.handler = function handler(event) {
             }
 
             resolve({
-                statusCode: '200 OK',
+                statusCode: 200,
                 headers: { 'Content-Type': 'application/json' },
                 body: output.toString()
             });
