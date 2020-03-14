@@ -22,10 +22,10 @@ module.exports.handler = function handler(event) {
     }
 
     const promise = new Promise((resolve, reject) => {
-        let output;
+        let output = '';
 
         mystem.stdout.on('data', data => {
-            output = data;
+            output += data;
         });
 
         mystem.stderr.on('data', error => {
