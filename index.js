@@ -1,4 +1,5 @@
 const { spawn } = require('child_process');
+const fs = require('fs');
 
 module.exports.handler = function handler(event) {
     const text = event.queryStringParameters.text;
@@ -10,10 +11,31 @@ module.exports.handler = function handler(event) {
         }
     }
 
+    const cyrillic = removeNonCyrillic(text.toLowerCase());
+    const cacheFilename = '/tmp/mystem-' + encodeURIComponent(cyrillic);
+
+    /**
+     * Пробуем найти результат в кэше в /tmp
+     */
+    try {
+        const data = fs.readFileSync(cacheFilename).toString('utf-8');
+
+        console.log(`Результат для «${cyrillic}» взят из кэша.`)
+
+        return {
+            statusCode: 200,
+            headers: { 'Content-Type': 'application/json' },
+            body: data
+        }
+    } catch(error) {
+        console.log(`Результат для «${cyrillic}» не найден в кэше.`)
+        // Не нашли на диске. Обращаемся к mystem
+    }
+
     let mystem;
 
     try {
-        mystem = spawn('./mystem', ['--format=json', '--weight', '-i']);
+        mystem = spawn('mystem', ['--format=json', '--weight', '-i']);
     } catch (error) {
         return {
             statusCode: 500,
@@ -49,12 +71,15 @@ module.exports.handler = function handler(event) {
             resolve({
                 statusCode: 200,
                 headers: { 'Content-Type': 'application/json' },
-                body: output.toString()
+                body: output
             });
+
+            /**
+             * Сохраняем результат в кэш в /tmp
+             */
+            fs.writeFileSync(cacheFilename, output);
         });
     });
-
-    const cyrillic = removeNonCyrillic(text);
 
     mystem.stdin.write(`${cyrillic}\n`);
     mystem.stdin.end();
